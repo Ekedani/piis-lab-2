@@ -137,7 +137,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         # Entry point
-        def miniMax(state, depth):
+        def minimax(state, depth):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return None
 
@@ -180,7 +180,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                     score = min(score, minValue(next_state, depth, next_agent))
             return score
 
-        return miniMax(gameState, self.depth)
+        return minimax(gameState, self.depth)
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -267,7 +267,46 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def expectimax(state, depth):
+            if (state.isWin() or state.isLose()) or depth == 0:
+                return None
+
+            legal_actions = state.getLegalActions(0)
+
+            action = None
+            score = float('-inf')
+            for cur_action in legal_actions:
+                next_state = state.generateSuccessor(0, cur_action)
+                cur_score =  recursiveExpectimax(next_state, depth, 1)
+                if cur_score > score:
+                    score = cur_score
+                    action = cur_action
+            return action
+
+        def recursiveExpectimax(state, depth, agent):
+            if (state.isWin() or state.isLose()) or depth == 0:
+                return self.evaluationFunction(state)
+
+            legal_actions = state.getLegalActions(agent)
+            next_agent = (agent + 1) % state.getNumAgents()
+
+            score = 0
+            if agent == 0:
+                score = float('-inf')
+                for cur_action in legal_actions:
+                    next_state = state.generateSuccessor(agent, cur_action)
+                    score = max(score, recursiveExpectimax(next_state, depth, next_agent))
+            else:
+                for cur_action in legal_actions:
+                    next_state = state.generateSuccessor(agent, cur_action)
+                    if next_agent == 0:
+                        score += recursiveExpectimax(next_state, depth - 1, next_agent)
+                    else:
+                        score += recursiveExpectimax(next_state, depth, next_agent)
+                score /= len(legal_actions)
+            return score
+
+        return expectimax(gameState, self.depth)
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
