@@ -136,9 +136,64 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
+        # Entry point
+        def miniMax(state, depth):
+            if (state.isWin() or state.isLose()) or depth == 0:
+                return None
 
-        # Returns (score, action) tuple
-        def miniMax(state, depth, agent):
+            legal_actions = state.getLegalActions(0)
+            score = float('-inf')
+            action = None
+            for cur_action in legal_actions:
+                next_state = state.generateSuccessor(0, cur_action)
+                cur_score = minValue(next_state, depth, 1)
+                if cur_score > score:
+                    score = cur_score
+                    action = cur_action
+            return action
+
+        # Pacman
+        def maxValue(state, depth):
+            if (state.isWin() or state.isLose()) or depth == 0:
+                return self.evaluationFunction(state)
+
+            legal_actions = state.getLegalActions(0)
+            score = float('-inf')
+            for cur_action in legal_actions:
+                next_state = state.generateSuccessor(0, cur_action)
+                score = max(score, minValue(next_state, depth, 1))
+            return score
+
+        # Ghosts
+        def minValue(state, depth, agent):
+            if (state.isWin() or state.isLose()) or depth == 0:
+                return self.evaluationFunction(state)
+
+            legal_actions = state.getLegalActions(agent)
+            next_agent = (agent + 1) % state.getNumAgents()
+            score = float('inf')
+            for cur_action in legal_actions:
+                next_state = state.generateSuccessor(agent, cur_action)
+                if next_agent == 0:
+                    score = min(score, maxValue(next_state, depth - 1))
+                else:
+                    score = min(score, minValue(next_state, depth, next_agent))
+            return score
+
+        return miniMax(gameState, self.depth)
+
+
+class AlphaBetaAgent(MultiAgentSearchAgent):
+    """
+    Your minimax agent with alpha-beta pruning (question 3)
+    """
+
+    def getAction(self, gameState: GameState):
+        """
+        Returns the minimax action using self.depth and self.evaluationFunction
+        """
+        "*** YOUR CODE HERE ***"
+        def alphaBeta(state, depth, agent, alpha, beta):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return self.evaluationFunction(state), None
 
@@ -152,7 +207,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 score = float('-inf')
                 for cur_action in legal_actions:
                     next_state = state.generateSuccessor(agent, cur_action)
-                    cur_score = miniMax(next_state, depth, next_agent)[0]
+                    cur_score = alphaBeta(next_state, depth, next_agent)[0]
                     if cur_score > score:
                         score = cur_score
                         action = cur_action
@@ -160,27 +215,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 score = float('inf')
                 for cur_action in legal_actions:
                     next_state = state.generateSuccessor(agent, cur_action)
-                    cur_score = miniMax(next_state, depth - int(is_next_layer), next_agent)[0]
+                    cur_score = alphaBeta(next_state, depth - int(is_next_layer), next_agent)[0]
                     if cur_score < score:
                         score = cur_score
                         action = cur_action
 
             return score, action
 
-        return miniMax(gameState, self.depth, 0)[1]
-
-
-class AlphaBetaAgent(MultiAgentSearchAgent):
-    """
-    Your minimax agent with alpha-beta pruning (question 3)
-    """
-
-    def getAction(self, gameState: GameState):
-        """
-        Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return alphaBeta(gameState, self.depth, 0)[1]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
