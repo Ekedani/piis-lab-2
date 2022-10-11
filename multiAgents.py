@@ -144,11 +144,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
             legal_actions = state.getLegalActions(agent)
             next_agent = (agent + 1) % state.getNumAgents()
-            next_layer = next_agent == 0
+            is_next_layer = next_agent == 0
+
             score = None
             action = None
-
-            # Pacman
             if agent == 0:
                 score = float('-inf')
                 for cur_action in legal_actions:
@@ -157,12 +156,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
                     if cur_score > score:
                         score = cur_score
                         action = cur_action
-            # Ghost
             else:
                 score = float('inf')
                 for cur_action in legal_actions:
                     next_state = state.generateSuccessor(agent, cur_action)
-                    cur_score = miniMax(next_state, depth - int(next_layer), next_agent)[0]
+                    cur_score = miniMax(next_state, depth - int(is_next_layer), next_agent)[0]
                     if cur_score < score:
                         score = cur_score
                         action = cur_action
