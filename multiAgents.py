@@ -19,6 +19,7 @@ import random, util
 from game import Agent
 from pacman import GameState
 
+
 class ReflexAgent(Agent):
     """
     A reflex agent chooses an action at each choice point by examining
@@ -28,7 +29,6 @@ class ReflexAgent(Agent):
     it in any way you see fit, so long as you don't touch our method
     headers.
     """
-
 
     def getAction(self, gameState: GameState):
         """
@@ -46,7 +46,7 @@ class ReflexAgent(Agent):
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        chosenIndex = random.choice(bestIndices)  # Pick randomly among the best
 
         "Add more of your code here if you want to"
 
@@ -77,6 +77,7 @@ class ReflexAgent(Agent):
         "*** YOUR CODE HERE ***"
         return successorGameState.getScore()
 
+
 def scoreEvaluationFunction(currentGameState: GameState):
     """
     This default evaluation function just returns the score of the state.
@@ -86,6 +87,7 @@ def scoreEvaluationFunction(currentGameState: GameState):
     (not reflex agents).
     """
     return currentGameState.getScore()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -102,10 +104,11 @@ class MultiAgentSearchAgent(Agent):
     is another abstract class.
     """
 
-    def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-        self.index = 0 # Pacman is always agent index 0
+    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+        self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
+
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
@@ -136,7 +139,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        # Entry point
+
         def minimax(state, depth):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return None
@@ -146,38 +149,32 @@ class MinimaxAgent(MultiAgentSearchAgent):
             action = None
             for cur_action in legal_actions:
                 next_state = state.generateSuccessor(0, cur_action)
-                cur_score = minValue(next_state, depth, 1)
+                cur_score = recursiveMinimax(next_state, depth, 1)
                 if cur_score > score:
                     score = cur_score
                     action = cur_action
             return action
 
-        # Pacman
-        def maxValue(state, depth):
-            if (state.isWin() or state.isLose()) or depth == 0:
-                return self.evaluationFunction(state)
-
-            legal_actions = state.getLegalActions(0)
-            score = float('-inf')
-            for cur_action in legal_actions:
-                next_state = state.generateSuccessor(0, cur_action)
-                score = max(score, minValue(next_state, depth, 1))
-            return score
-
-        # Ghosts
-        def minValue(state, depth, agent):
+        def recursiveMinimax(state, depth, agent):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return self.evaluationFunction(state)
 
             legal_actions = state.getLegalActions(agent)
             next_agent = (agent + 1) % state.getNumAgents()
-            score = float('inf')
-            for cur_action in legal_actions:
-                next_state = state.generateSuccessor(agent, cur_action)
-                if next_agent == 0:
-                    score = min(score, maxValue(next_state, depth - 1))
-                else:
-                    score = min(score, minValue(next_state, depth, next_agent))
+
+            if agent == 0:
+                score = float('-inf')
+                for cur_action in legal_actions:
+                    next_state = state.generateSuccessor(agent, cur_action)
+                    score = max(score, recursiveMinimax(next_state, depth, next_agent))
+            else:
+                score = float('inf')
+                for cur_action in legal_actions:
+                    next_state = state.generateSuccessor(agent, cur_action)
+                    if next_agent == 0:
+                        score = min(score, recursiveMinimax(next_state, depth - 1, next_agent))
+                    else:
+                        score = min(score, recursiveMinimax(next_state, depth, next_agent))
             return score
 
         return minimax(gameState, self.depth)
@@ -194,20 +191,19 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        # Entry point
         def alphaBeta(state, depth):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return None
 
-            legal_actions = state.getLegalActions(0)
             alpha = float('-inf')
             beta = float('inf')
+            legal_actions = state.getLegalActions(0)
 
-            score = alpha
+            score = float('-inf')
             action = None
             for cur_action in legal_actions:
                 next_state = state.generateSuccessor(0, cur_action)
-                cur_score = minValue(next_state, depth, 1, alpha, beta)
+                cur_score = recursiveAlphaBeta(next_state, depth, 1, alpha, beta)
                 if cur_score > score:
                     score = cur_score
                     action = cur_action
@@ -216,39 +212,32 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 alpha = max(alpha, score)
             return action
 
-        # Pacman
-        def maxValue(state, depth, alpha, beta):
-            if (state.isWin() or state.isLose()) or depth == 0:
-                return self.evaluationFunction(state)
-
-            legal_actions = state.getLegalActions(0)
-            score = float('-inf')
-            for cur_action in legal_actions:
-                next_state = state.generateSuccessor(0, cur_action)
-                score = max(score, minValue(next_state, depth, 1, alpha, beta))
-                if score > beta:
-                    break
-                alpha = max(alpha, score)
-            return score
-
-        # Ghosts
-        def minValue(state, depth, agent, alpha, beta):
+        def recursiveAlphaBeta(state, depth, agent, alpha, beta):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return self.evaluationFunction(state)
 
             legal_actions = state.getLegalActions(agent)
             next_agent = (agent + 1) % state.getNumAgents()
-            score = float('inf')
-            for cur_action in legal_actions:
-                next_state = state.generateSuccessor(agent, cur_action)
-                if next_agent == 0:
-                    score = min(score, maxValue(next_state, depth - 1, alpha, beta))
-                else:
-                    score = min(score, minValue(next_state, depth, next_agent, alpha, beta))
-                if score < alpha:
-                    break
-                beta = min(beta, score)
 
+            if agent == 0:
+                score = float('-inf')
+                for cur_action in legal_actions:
+                    next_state = state.generateSuccessor(0, cur_action)
+                    score = max(score, recursiveAlphaBeta(next_state, depth, next_agent, alpha, beta))
+                    if score > beta:
+                        break
+                    alpha = max(alpha, score)
+            else:
+                score = float('inf')
+                for cur_action in legal_actions:
+                    next_state = state.generateSuccessor(agent, cur_action)
+                    if next_agent == 0:
+                        score = min(score, recursiveAlphaBeta(next_state, depth - 1, next_agent, alpha, beta))
+                    else:
+                        score = min(score, recursiveAlphaBeta(next_state, depth, next_agent, alpha, beta))
+                    if score < alpha:
+                        break
+                    beta = min(beta, score)
             return score
 
         return alphaBeta(gameState, self.depth)
@@ -267,6 +256,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
+
         def expectimax(state, depth):
             if (state.isWin() or state.isLose()) or depth == 0:
                 return None
@@ -277,7 +267,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             score = float('-inf')
             for cur_action in legal_actions:
                 next_state = state.generateSuccessor(0, cur_action)
-                cur_score =  recursiveExpectimax(next_state, depth, 1)
+                cur_score = recursiveExpectimax(next_state, depth, 1)
                 if cur_score > score:
                     score = cur_score
                     action = cur_action
@@ -308,6 +298,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         return expectimax(gameState, self.depth)
 
+
 def betterEvaluationFunction(currentGameState: GameState):
     """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
@@ -317,6 +308,7 @@ def betterEvaluationFunction(currentGameState: GameState):
     """
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
+
 
 # Abbreviation
 better = betterEvaluationFunction
