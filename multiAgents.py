@@ -307,7 +307,42 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # The best & the worst possible states
+    if currentGameState.isLose():
+        return float("-inf")
+    elif currentGameState.isWin():
+        return float("inf")
+
+    pacman_pos = currentGameState.getPacmanPosition()
+    score = currentGameState.getScore()
+
+    # Food parameter
+    food_left = currentGameState.getFood().asList()
+    food_distances = []
+    for food in food_left:
+        food_distances.append(util.manhattanDistance(pacman_pos, food))
+    nearest_food = min(food_distances)
+
+    # Ghost parameter
+    ghosts = currentGameState.getGhostStates()
+    active_ghost_distances = []
+    for ghost in ghosts:
+        if not ghost.scaredTimer:
+            active_ghost_distances.append(util.manhattanDistance(pacman_pos, ghost.getPosition()))
+    nearest_ghost = 0
+    if len(active_ghost_distances) != 0:
+        nearest_ghost = min(active_ghost_distances)
+
+    # Coefficients to configure evaluation
+    score_coef = 5
+    food_left_coef = 4
+    nearest_food_coef = 2
+    nearest_ghost_coef = 2
+
+    evaluation = score_coef * score - food_left_coef * len(food_left) - nearest_food_coef * nearest_food
+    if nearest_ghost != 0:
+        evaluation -= nearest_ghost_coef * (1 / nearest_ghost)
+    return evaluation
 
 
 # Abbreviation
