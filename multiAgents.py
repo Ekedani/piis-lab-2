@@ -104,7 +104,7 @@ class MultiAgentSearchAgent(Agent):
     is another abstract class.
     """
 
-    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+    def __init__(self, evalFn='betterEvaluationFunction', depth='3'):
         self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
@@ -307,15 +307,14 @@ def betterEvaluationFunction(currentGameState: GameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    # The best & the worst possible states
+    # Tries to achieve maximal score
+    score = currentGameState.getScore()
     if currentGameState.isLose():
-        return float("-inf")
+        return -999999 + score
     elif currentGameState.isWin():
-        return float("inf")
+        return 999999 + score
 
     pacman_pos = currentGameState.getPacmanPosition()
-    score = currentGameState.getScore()
-
     # Food parameter
     food_left = currentGameState.getFood().asList()
     food_distances = []
@@ -334,14 +333,14 @@ def betterEvaluationFunction(currentGameState: GameState):
         nearest_ghost = min(active_ghost_distances)
 
     # Coefficients to configure evaluation
-    score_coef = 5
-    food_left_coef = 4
+    score_coef = 6
+    food_left_coef = 6
     nearest_food_coef = 2
     nearest_ghost_coef = 2
 
     evaluation = score_coef * score - food_left_coef * len(food_left) - nearest_food_coef * nearest_food
     if nearest_ghost != 0:
-        evaluation -= nearest_ghost_coef * (1 / nearest_ghost)
+        evaluation -= nearest_ghost_coef * (1. / nearest_ghost)
     return evaluation
 
 
